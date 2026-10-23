@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pola Pertumbuhan Tumbuhan</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'plant-light': '#dcfce7',
+                        'plant-green': '#22c55e',
+                        'plant-dark': '#166534',
+                        'soil-brown': '#78350f',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            scroll-behavior: smooth;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 400px;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        /* Hide scrollbar for neatness */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #22c55e; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #166534; 
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-plant-green selection:text-white">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center gap-2 text-plant-dark">
+                    <i class="fa-solid fa-leaf text-2xl text-plant-green"></i>
+                    <span class="font-bold text-xl tracking-tight">BioTumbuhan</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#pengenalan" class="text-gray-600 hover:text-plant-green transition-colors font-medium">Pengenalan</a>
+                    <a href="#simulasi" class="text-gray-600 hover:text-plant-green transition-colors font-medium">Simulasi 3D</a>
+                    <a href="#graf" class="text-gray-600 hover:text-plant-green transition-colors font-medium">Graf Pertumbuhan</a>
+                    <a href="#eksperimen" class="text-gray-600 hover:text-plant-green transition-colors font-medium">Eksperimen</a>
+                    <a href="#kuiz" class="text-gray-600 hover:text-plant-green transition-colors font-medium">Kuiz</a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="text-gray-600 hover:text-plant-green focus:outline-none">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative bg-plant-dark overflow-hidden text-white" id="pengenalan">
+        <div class="absolute inset-0 opacity-20">
+            <svg class="h-full w-full" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+                <defs>
+                    <pattern id="pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M0 40L40 0H20L0 20M40 40V20L20 40" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#pattern)"></rect>
+            </svg>
+        </div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 flex flex-col items-center text-center">
+            <span class="px-4 py-1.5 rounded-full bg-white/20 text-sm font-semibold tracking-wider mb-6 backdrop-blur-sm border border-white/30">Biologi KSSM Tingkatan 5</span>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+                Pola Pertumbuhan <br><span class="text-plant-light">Tumbuhan</span>
+            </h1>
+            <p class="mt-4 max-w-2xl text-lg md:text-xl text-green-100 font-light leading-relaxed">
+                Pelajari bagaimana organisma tumbuhan membesar, fasa-fasa pertumbuhan, dan bentuk lengkung sigmoid yang unik melalui penerangan interaktif, simulasi 3D dan graf.
+            </p>
+            <div class="mt-10 flex gap-4">
+                <a href="#simulasi" class="bg-plant-green hover:bg-green-500 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition transform hover:-translate-y-1">Lihat Simulasi</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24">
+
+        <!-- 3D Simulation Section -->
+        <section id="simulasi" class="scroll-mt-24">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-900">Simulasi 3D: Dari Biji Benih ke Pokok</h2>
+                <p class="mt-4 text-gray-600 max-w-2xl mx-auto">Gunakan slaider di bawah untuk melihat proses percambahan dan pertumbuhan anak benih secara maya (menggantikan fungsi AR untuk akses pelayar).</p>
+            </div>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 flex flex-col lg:flex-row gap-8 items-center">
+                <div class="w-full lg:w-2/3">
+                    <div id="canvas-container">
+                        <!-- ThreeJS canvas will be injected here -->
+                        <div id="loading-3d" class="absolute inset-0 flex items-center justify-center bg-blue-50 z-10">
+                            <div class="animate-spin rounded-full h-12 w-12 border-4 border-plant-green border-t-transparent"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full lg:w-1/3 space-y-6">
+                    <div class="bg-plant-light p-6 rounded-xl border border-green-200">
+                        <h3 class="text-xl font-bold text-plant-dark mb-4">Kawalan Pertumbuhan</h3>
+                        
+                        <label for="growthSlider" class="block text-sm font-medium text-gray-700 mb-2">Umur Tumbuhan: <span id="growthLabel" class="font-bold text-plant-green">0 Hari</span></label>
+                        <input type="range" id="growthSlider" min="0" max="100" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-plant-green">
+                        
+                        <div class="flex justify-between text-xs text-gray-500 mt-2 mb-6">
+                            <span>Biji Benih</span>
+                            <span>Bercambah</span>
+                            <span>Berdaun</span>
+                        </div>
+
+                        <div class="space-y-4 text-sm text-gray-700" id="phase-description">
+                            <!-- JS will update this text -->
+                            <p class="flex items-start gap-2">
+                                <i class="fa-solid fa-seedling text-soil-brown mt-1"></i>
+                                <span><strong>Fasa Permulaan:</strong> Biji benih menyerap air, membengkak, dan mula bercambah dengan perlahan.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Graph and Explanation Section -->
+        <section id="graf" class="scroll-mt-24">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="order-2 lg:order-1">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Lengkung Pertumbuhan Sigmoid</h2>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Pertumbuhan tumbuhan lazimnya diukur menggunakan parameter seperti ketinggian, jisim kering, atau isi padu melawan masa. Apabila diplotkan pada graf, ia menghasilkan bentuk lengkung <strong>'S' atau Sigmoid</strong>. Lengkung ini dibahagikan kepada beberapa fasa utama:
+                    </p>
+                    
+                    <div class="space-y-6">
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">1</div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">Fasa Permulaan (Lag Phase)</h4>
+                                <p class="text-gray-600 text-sm mt-1">Kadar pertumbuhan adalah sangat lambat. Ini kerana sel-sel baru mula membahagi dan tumbuhan sedang menyesuaikan diri dengan persekitaran.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-sm">2</div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">Fasa Pertumbuhan Pesat (Exponential Phase)</h4>
+                                <p class="text-gray-600 text-sm mt-1">Kadar pertumbuhan adalah paling tinggi/pesat. Sel-sel aktif membahagi dan memanjang. Tumbuhan menyerap banyak nutrien.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold text-sm">3</div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">Fasa Pertumbuhan Perlahan (Decelerating Phase)</h4>
+                                <p class="text-gray-600 text-sm mt-1">Kadar pertumbuhan mula menurun dan menjadi perlahan. Faktor luaran (kekurangan ruang, nutrien) mengehadkan pertumbuhan.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-start">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold text-sm">4</div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">Fasa Matang / Pegun (Stationary Phase)</h4>
+                                <p class="text-gray-600 text-sm mt-1">Kadar pertumbuhan menjadi sifar (graf mendatar). Tumbuhan telah mencapai saiz maksimum dan matang sepenuhnya.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="order-1 lg:order-2 bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                    <h3 class="text-center font-bold text-gray-800 mb-4">Graf Ketinggian vs Masa</h3>
+                    <div class="relative w-full h-80">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Experiment Procedure -->
+        <section id="eksperimen" class="scroll-mt-24">
+            <div class="bg-slate-900 text-white rounded-3xl p-8 lg:p-12 relative overflow-hidden shadow-2xl">
+                <!-- Background decoration -->
+                <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-plant-dark opacity-50 blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-900 opacity-50 blur-3xl"></div>
+                
+                <div class="relative z-10">
+                    <div class="text-center mb-10">
+                        <h2 class="text-3xl font-bold text-white">Prosedur Eksperimen</h2>
+                        <p class="mt-4 text-gray-300 max-w-2xl mx-auto">Eksperimen untuk mengkaji pola pertumbuhan anak benih kacang hijau (Vigna radiata) dengan mengukur ketinggiannya.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Step 1 -->
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl">
+                            <div class="w-12 h-12 rounded-full bg-plant-green flex items-center justify-center text-xl font-bold mb-4 shadow-lg">1</div>
+                            <h4 class="text-lg font-semibold mb-2">Penyediaan Bahan</h4>
+                            <p class="text-gray-300 text-sm">Sediakan kapas yang dilembapkan dengan air di dalam piring Petri. Letakkan 5 biji benih kacang hijau di atas kapas tersebut.</p>
+                        </div>
+                        <!-- Step 2 -->
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl">
+                            <div class="w-12 h-12 rounded-full bg-plant-green flex items-center justify-center text-xl font-bold mb-4 shadow-lg">2</div>
+                            <h4 class="text-lg font-semibold mb-2">Penyimpanan</h4>
+                            <p class="text-gray-300 text-sm">Simpan piring Petri di tempat yang gelap selama 2 hari untuk proses percambahan awal. Pastikan kapas sentiasa lembap.</p>
+                        </div>
+                        <!-- Step 3 -->
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl">
+                            <div class="w-12 h-12 rounded-full bg-plant-green flex items-center justify-center text-xl font-bold mb-4 shadow-lg">3</div>
+                            <h4 class="text-lg font-semibold mb-2">Pengukuran</h4>
+                            <p class="text-gray-300 text-sm">Pindahkan ke tempat bercahaya. Gunakan pembaris dan benang, ukur panjang anak benih dari pangkal akar hingga hujung pucuk setiap hari selama 14 hari.</p>
+                        </div>
+                        <!-- Step 4 -->
+                        <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl">
+                            <div class="w-12 h-12 rounded-full bg-plant-green flex items-center justify-center text-xl font-bold mb-4 shadow-lg">4</div>
+                            <h4 class="text-lg font-semibold mb-2">Merekod Data</h4>
+                            <p class="text-gray-300 text-sm">Kira purata ketinggian untuk 5 anak benih tersebut setiap hari. Catat dalam jadual dan plotkan graf Ketinggian (cm) melawan Masa (hari).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="kuiz" class="scroll-mt-24 pb-24">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-gray-900">Uji Minda Anda</h2>
+                <p class="mt-4 text-gray-600 max-w-2xl mx-auto">Jawab soalan-soalan berikut untuk menguji pemahaman anda mengenai pola pertumbuhan tumbuhan.</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                <div id="quiz-container" class="p-8">
+                    <!-- Question Header -->
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-sm font-semibold text-plant-green uppercase tracking-wider" id="question-tracker">Soalan 1 / 3</span>
+                        <span class="text-sm text-gray-500 font-medium">Markah: <span id="score-display">0</span></span>
+                    </div>
+
+                    <!-- Question Text -->
+                    <h3 class="text-xl font-bold text-gray-800 mb-6" id="question-text">Memuatkan soalan...</h3>
+
+                    <!-- Options -->
+                    <div class="space-y-3" id="options-container">
+                        <!-- Buttons injected via JS -->
+                    </div>
+
+                    <!-- Feedback Box (Hidden by default) -->
+                    <div id="feedback-box" class="mt-6 p-4 rounded-xl hidden">
+                        <p id="feedback-text" class="font-medium"></p>
+                        <button id="next-btn" class="mt-3 bg-gray-900 hover:bg-gray-800 text-white px-6 py-2 rounded-lg font-medium transition-colors hidden">Seterusnya</button>
+                        <button id="restart-btn" class="mt-3 bg-plant-green hover:bg-plant-dark text-white px-6 py-2 rounded-lg font-medium transition-colors hidden">Cuba Lagi</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-8 border-t border-gray-800 text-center">
+        <p>© 2026 Modul Biologi Interaktif (Simulasi Pendidikan). Dicipta untuk tujuan pembelajaran.</p>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        // ==========================================
+        // 1. THREE.JS: SIMULASI 3D PERTUMBUHAN
+        // ==========================================
+        const init3D = () => {
+            const container = document.getElementById('canvas-container');
+            const loading = document.getElementById('loading-3d');
+            
+            // Scene setup
+            const scene = new THREE.Scene();
+            scene.background = null; // Let the CSS gradient show
+            
+            // Camera setup
+            const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+            camera.position.set(0, 5, 12);
+            camera.lookAt(0, 2, 0);
+
+            // Renderer setup
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Materials
+            const soilMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+            const seedMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.4 });
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.3, side: THREE.DoubleSide });
+
+            // Soil
+            const soilGeo = new THREE.CylinderGeometry(5, 5, 2, 32);
+            const soil = new THREE.Mesh(soilGeo, soilMat);
+            soil.position.y = -1;
+            soil.receiveShadow = true;
+            scene.add(soil);
+
+            // Plant Group (to manage all plant parts)
+            const plantGroup = new THREE.Group();
+            scene.add(plantGroup);
+
+            // Seed
+            const seedGeo = new THREE.SphereGeometry(0.3, 16, 16);
+            seedGeo.scale(1, 0.7, 1);
+            const seed = new THREE.Mesh(seedGeo, seedMat);
+            seed.position.y = 0.1;
+            seed.castShadow = true;
+            plantGroup.add(seed);
+
+            // Stem
+            // Translate geometry so origin is at the bottom, making scaling up easy
+            const stemGeo = new THREE.CylinderGeometry(0.08, 0.1, 1, 16);
+            stemGeo.translate(0, 0.5, 0); 
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.position.y = 0.2;
+            stem.castShadow = true;
+            stem.scale.set(1, 0, 1); // Start hidden (scale Y = 0)
+            plantGroup.add(stem);
+
+            // Leaves
+            const leavesGroup = new THREE.Group();
+            leavesGroup.position.y = 0.2; // Will move up with stem
+            
+            // Leaf shape using shape geometry for better look than simple plane
+            const leafShape = new THREE.Shape();
+            leafShape.moveTo(0, 0);
+            leafShape.quadraticCurveTo(0.5, 0.5, 0, 2);
+            leafShape.quadraticCurveTo(-0.5, 0.5, 0, 0);
+            const leafGeo = new THREE.ShapeGeometry(leafShape);
+            
+            const leaf1 = new THREE.Mesh(leafGeo, leafMat);
+            leaf1.rotation.z = -Math.PI / 4;
+            leaf1.rotation.y = Math.PI / 6;
+            leaf1.castShadow = true;
+            
+            const leaf2 = new THREE.Mesh(leafGeo, leafMat);
+            leaf2.rotation.z = Math.PI / 4;
+            leaf2.rotation.y = -Math.PI / 6;
+            leaf2.castShadow = true;
+            
+            leavesGroup.add(leaf1);
+            leavesGroup.add(leaf2);
+            leavesGroup.scale.set(0, 0, 0); // Start hidden
+            plantGroup.add(leavesGroup);
+
+            // Remove loader
+            loading.style.display = 'none';
+
+            // Animation Loop (just for rendering and slight idle rotation)
+            const animate = () => {
+                requestAnimationFrame(animate);
+                plantGroup.rotation.y += 0.005; // Gentle spin
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            // Resize handler
+            window.addEventListener('resize', () => {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+
+            // Logic to update plant based on slider (0 - 100)
+            const updatePlantGrowth = (progress) => {
+                // Constants for max heights/scales
+                const maxStemHeight = 5;
+                const maxLeafScale = 0.8;
+
+                // Phase 1: 0 - 20 (Seed swelling/cracking)
+                if (progress <= 20) {
+                    let seedScale = 1 + (progress / 20) * 0.5; // swells to 1.5x
+                    seed.scale.set(seedScale, seedScale * 0.8, seedScale);
+                    seed.material.color.setHex(0x8b5a2b); // Brown
+                    
+                    stem.scale.set(1, 0.001, 1); // keep hidden
+                    leavesGroup.scale.set(0, 0, 0);
+                } 
+                // Phase 2: 21 - 70 (Stem growing)
+                else if (progress > 20 && progress <= 70) {
+                    seed.scale.set(1.5, 1.2, 1.5);
+                    seed.material.color.setHex(0x556b2f); // Turn slightly green
+                    
+                    let stemGrowth = (progress - 20) / 50; // 0 to 1
+                    stem.scale.set(1, stemGrowth * maxStemHeight, 1);
+                    
+                    leavesGroup.position.y = 0.2 + (stemGrowth * maxStemHeight);
+                    
+                    if (progress < 50) {
+                        leavesGroup.scale.set(0, 0, 0); // still closed
+                    } else {
+                        // Leaves start sprouting
+                        let leafGrowth = (progress - 50) / 20; // 0 to 1
+                        leavesGroup.scale.set(leafGrowth * maxLeafScale, leafGrowth * maxLeafScale, leafGrowth * maxLeafScale);
+                    }
+                }
+                // Phase 3: 71 - 100 (Leaves fully expanding, plant matures)
+                else {
+                    stem.scale.set(1, maxStemHeight + (progress-70)/30 * 1, 1); // little bit more height
+                    leavesGroup.position.y = 0.2 + maxStemHeight + (progress-70)/30 * 1;
+                    
+                    let leafGrowth = 1 + (progress - 70) / 30 * 0.5; // expand a bit more
+                    leavesGroup.scale.set(leafGrowth * maxLeafScale, leafGrowth * maxLeafScale, leafGrowth * maxLeafScale);
+                }
+            };
+
+            // Link slider to 3D and UI
+            const slider = document.getElementById('growthSlider');
+            const label = document.getElementById('growthLabel');
+            const descriptionBox = document.getElementById('phase-description');
+            
+            slider.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                const days = Math.floor((val / 100) * 14); // Map 0-100 to 0-14 days
+                label.innerText = `${days} Hari`;
+                
+                updatePlantGrowth(val);
+
+                // Update text description based on phases
+                if (val <= 20) {
+                    descriptionBox.innerHTML = `
+                        <p class="flex items-start gap-2">
+                            <i class="fa-solid fa-seedling text-soil-brown mt-1"></i>
+                            <span><strong>Fasa Permulaan:</strong> Pertumbuhan perlahan (Lag Phase). Biji benih menyerap air, embrio mula aktif membahagi sel.</span>
+                        </p>`;
+                } else if (val <= 70) {
+                    descriptionBox.innerHTML = `
+                        <p class="flex items-start gap-2">
+                            <i class="fa-solid fa-arrow-trend-up text-plant-green mt-1"></i>
+                            <span><strong>Fasa Pertumbuhan Pesat:</strong> Akar dan pucuk tumbuh dengan cepat (Exponential Phase). Sel memanjang dan membeza.</span>
+                        </p>`;
+                } else if (val < 95) {
+                    descriptionBox.innerHTML = `
+                        <p class="flex items-start gap-2">
+                            <i class="fa-solid fa-leaf text-plant-dark mt-1"></i>
+                            <span><strong>Fasa Pertumbuhan Perlahan:</strong> Daun berkembang. Kadar pertumbuhan tinggi tetapi mula perlahan akibat sumber terhad.</span>
+                        </p>`;
+                } else {
+                    descriptionBox.innerHTML = `
+                        <p class="flex items-start gap-2">
+                            <i class="fa-solid fa-check-circle text-blue-500 mt-1"></i>
+                            <span><strong>Fasa Matang:</strong> Pertumbuhan terhenti (Stationary Phase). Tumbuhan mencapai saiz optimum untuk berbunga.</span>
+                        </p>`;
+                }
+            });
+
+            // Trigger initial state
+            updatePlantGrowth(0);
+        };
+
+        // ==========================================
+        // 2. CHART.JS: GRAF SIGMOID
+        // ==========================================
+        const initChart = () => {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            
+            // X-Axis (Days)
+            const labels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+            
+            // Y-Axis (Height in cm) - forming a sigmoid curve
+            const data = [0.0, 0.2, 0.5, 1.2, 2.5, 5.0, 8.5, 12.0, 14.8, 16.5, 17.5, 18.2, 18.5, 18.5, 18.5];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Ketinggian Anak Benih (cm)',
+                        data: data,
+                        borderColor: '#22c55e', // plant-green
+                        backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#166534',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.4, // smooth curve
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    family: 'Inter',
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: 'Inter', size: 13 },
+                            bodyFont: { family: 'Inter', size: 14 },
+                            padding: 10,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `Ketinggian: ${context.parsed.y} cm`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Ketinggian (cm)',
+                                font: { family: 'Inter', weight: 'bold' }
+                            },
+                            beginAtZero: true,
+                            suggestedMax: 20
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Masa (Hari)',
+                                font: { family: 'Inter', weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        // ==========================================
+        // 3. KUIZ INTERAKTIF
+        // ==========================================
+        const quizData = [
+            {
+                question: "Apakah bentuk umum graf pertumbuhan bagi kebanyakan organisma termasuk tumbuhan?",
+                options: [
+                    "Garis Lurus (Linear)",
+                    "Bentuk huruf J (Eksponen berterusan)",
+                    "Bentuk huruf S (Sigmoid)",
+                    "Bentuk huruf U"
+                ],
+                correctIndex: 2,
+                explanation: "Betul! Graf pertumbuhan biasa memaparkan lengkung berbentuk S atau Sigmoid yang mempunyai 4 fasa utama."
+            },
+            {
+                question: "Dalam fasa manakah kadar pembahagian dan pemanjangan sel berlaku dengan paling pantas?",
+                options: [
+                    "Fasa Permulaan (Lag)",
+                    "Fasa Pertumbuhan Pesat (Eksponen)",
+                    "Fasa Pertumbuhan Perlahan",
+                    "Fasa Matang (Pegun)"
+                ],
+                correctIndex: 1,
+                explanation: "Tepat! Fasa Eksponen atau Pertumbuhan Pesat adalah tahap di mana sel membahagi dengan paling aktif."
+            },
+            {
+                question: "Mengapakah graf mendatar pada Fasa Matang (Pegun)?",
+                options: [
+                    "Kerana kadar pertumbuhan adalah sifar.",
+                    "Kerana tumbuhan kekurangan air sepenuhnya.",
+                    "Kerana kadar pertumbuhan menjadi negatif (mati).",
+                    "Kerana tumbuhan tidak lagi melakukan fotosintesis."
+                ],
+                correctIndex: 0,
+                explanation: "Betul. Pada fasa matang, kadar pertumbuhan adalah sifar bermaksud tumbuhan telah mencapai saiz optimum/maksimumnya."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let hasAnswered = false;
+
+        const initQuiz = () => {
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const tracker = document.getElementById('question-tracker');
+            const scoreDisplay = document.getElementById('score-display');
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackText = document.getElementById('feedback-text');
+            const nextBtn = document.getElementById('next-btn');
+            const restartBtn = document.getElementById('restart-btn');
+
+            const loadQuestion = () => {
+                hasAnswered = false;
+                const q = quizData[currentQuestion];
+                
+                tracker.innerText = `Soalan ${currentQuestion + 1} / ${quizData.length}`;
+                questionText.innerText = q.question;
+                
+                optionsContainer.innerHTML = '';
+                feedbackBox.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                restartBtn.classList.add('hidden');
+                
+                q.options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 rounded-xl border border-gray-200 bg-gray-50 hover:bg-plant-light hover:border-plant-green transition-all font-medium text-gray-700";
+                    btn.innerText = opt;
+                    btn.onclick = () => selectAnswer(index, btn);
+                    optionsContainer.appendChild(btn);
+                });
+            };
+
+            const selectAnswer = (selectedIndex, selectedBtn) => {
+                if (hasAnswered) return;
+                hasAnswered = true;
+                
+                const q = quizData[currentQuestion];
+                const isCorrect = selectedIndex === q.correctIndex;
+                
+                // Style the selected button
+                const allBtns = optionsContainer.querySelectorAll('button');
+                allBtns.forEach((btn, idx) => {
+                    btn.disabled = true; // disable clicks
+                    btn.classList.remove('hover:bg-plant-light', 'hover:border-plant-green', 'bg-gray-50');
+                    
+                    if (idx === q.correctIndex) {
+                        btn.classList.add('bg-green-100', 'border-green-500', 'text-green-800');
+                    } else if (idx === selectedIndex && !isCorrect) {
+                        btn.classList.add('bg-red-100', 'border-red-500', 'text-red-800');
+                    } else {
+                        btn.classList.add('opacity-50');
+                    }
+                });
+
+                // Handle score and feedback
+                feedbackBox.classList.remove('hidden');
+                if (isCorrect) {
+                    score++;
+                    scoreDisplay.innerText = score;
+                    feedbackBox.className = "mt-6 p-4 rounded-xl bg-green-50 border border-green-200";
+                    feedbackText.className = "font-medium text-green-800";
+                    feedbackText.innerHTML = `<i class="fa-solid fa-circle-check mr-2"></i> ${q.explanation}`;
+                } else {
+                    feedbackBox.className = "mt-6 p-4 rounded-xl bg-red-50 border border-red-200";
+                    feedbackText.className = "font-medium text-red-800";
+                    feedbackText.innerHTML = `<i class="fa-solid fa-circle-xmark mr-2"></i> Salah. Jawapan yang betul ialah: <strong>${q.options[q.correctIndex]}</strong>`;
+                }
+
+                // Setup next/restart buttons
+                if (currentQuestion < quizData.length - 1) {
+                    nextBtn.classList.remove('hidden');
+                } else {
+                    restartBtn.classList.remove('hidden');
+                    feedbackText.innerHTML += `<br><br><strong>Kuiz Tamat! Anda mendapat ${score} daripada ${quizData.length} markah.</strong>`;
+                }
+            };
+
+            nextBtn.onclick = () => {
+                currentQuestion++;
+                loadQuestion();
+            };
+
+            restartBtn.onclick = () => {
+                currentQuestion = 0;
+                score = 0;
+                scoreDisplay.innerText = score;
+                loadQuestion();
+            };
+
+            // Start first question
+            loadQuestion();
+        };
+
+        // ==========================================
+        // INITIALIZATION ON LOAD
+        // ==========================================
+        window.onload = () => {
+            init3D();
+            initChart();
+            initQuiz();
+        };
+
+    </script>
+</body>
+</html>
